@@ -2,7 +2,8 @@ package ratelimiterpipe_test
 
 import (
 	"fmt"
-	"ratelimiter/pkg/ratelimiterpipe"
+
+	"github.com/sterlingdevils/ratelimiterpipe/pkg/ratelimiterpipe"
 )
 
 type DataType string
