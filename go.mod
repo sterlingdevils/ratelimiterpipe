@@ -1,4 +1,4 @@
-module ratelimiter
+module github.com/sterlingdevils/ratelimiterpipe
 
 go 1.18
 
