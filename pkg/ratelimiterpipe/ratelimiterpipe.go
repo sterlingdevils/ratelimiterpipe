@@ -65,7 +65,10 @@ func (r *RateLimiterPipe[_]) mainloop() {
 
 	for {
 		select {
-		case t := <-r.inchan:
+		case t, more := <-r.inchan:
+			if !more { // if the channel is closed, then we are done
+				return
+			}
 			err := r.limit.WaitN(r.ctx, t.Size())
 			if err != nil {
 				continue
