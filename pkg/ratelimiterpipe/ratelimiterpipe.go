@@ -3,7 +3,7 @@ package ratelimiterpipe
 import (
 	"context"
 
-	"github.com/sterlingdevils/pipelines/pkg/pipeline"
+	"github.com/sterlingdevils/pipelines"
 	"golang.org/x/time/rate"
 )
 
@@ -24,7 +24,7 @@ type RateLimiterPipe[T Sizeable] struct {
 	inchan  chan T
 	outchan chan T
 
-	pl pipeline.Pipelineable[T]
+	pl pipelines.Pipeliner[T]
 }
 
 // InChan
@@ -94,7 +94,7 @@ func NewWithChannel[T Sizeable](rLimit rate.Limit, bLimit int, in chan T) (*Rate
 	return &r, nil
 }
 
-func NewWithPipeline[T Sizeable](rLimit rate.Limit, bLimit int, p pipeline.Pipelineable[T]) (*RateLimiterPipe[T], error) {
+func NewWithPipeline[T Sizeable](rLimit rate.Limit, bLimit int, p pipelines.Pipeliner[T]) (*RateLimiterPipe[T], error) {
 	r, err := NewWithChannel(rLimit, bLimit, p.PipelineChan())
 	if err != nil {
 		return nil, err
