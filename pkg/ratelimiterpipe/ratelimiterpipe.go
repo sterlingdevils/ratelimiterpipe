@@ -2,6 +2,7 @@ package ratelimiterpipe
 
 import (
 	"context"
+	"sync"
 
 	"github.com/sterlingdevils/pipelines"
 	"golang.org/x/time/rate"
@@ -25,6 +26,7 @@ type RateLimiterPipe[T Sizeable] struct {
 	outchan chan T
 
 	pl pipelines.Pipeliner[T]
+	wg sync.WaitGroup
 }
 
 // InChan
@@ -50,6 +52,9 @@ func (r *RateLimiterPipe[_]) Close() {
 
 	// Cancel our context
 	r.can()
+
+	// Wait for us to be done
+	r.wg.Wait()
 }
 
 func (r *RateLimiterPipe[_]) SetLimit(l rate.Limit) {
@@ -61,6 +66,7 @@ func (r *RateLimiterPipe[_]) SetBurst(n int) {
 }
 
 func (r *RateLimiterPipe[_]) mainloop() {
+	defer r.wg.Done()
 	defer close(r.outchan)
 
 	for {
@@ -89,6 +95,7 @@ func NewWithChannel[T Sizeable](rLimit rate.Limit, bLimit int, in chan T) (*Rate
 		inchan:  in,
 		outchan: make(chan T, CHANSIZE)}
 
+	r.wg.Add(1)
 	go r.mainloop()
 
 	return &r, nil
