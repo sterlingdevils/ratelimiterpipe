@@ -25,7 +25,7 @@ type RateLimiterPipe[T Sizeable] struct {
 	inchan  chan T
 	outchan chan T
 
-	pl pipelines.Pipeliner[T]
+	pl pipelines.Pipeline[T]
 	wg sync.WaitGroup
 }
 
@@ -101,7 +101,7 @@ func NewWithChannel[T Sizeable](rLimit rate.Limit, bLimit int, in chan T) (*Rate
 	return &r, nil
 }
 
-func NewWithPipeline[T Sizeable](rLimit rate.Limit, bLimit int, p pipelines.Pipeliner[T]) (*RateLimiterPipe[T], error) {
+func NewWithPipeline[T Sizeable](rLimit rate.Limit, bLimit int, p pipelines.Pipeline[T]) (*RateLimiterPipe[T], error) {
 	r, err := NewWithChannel(rLimit, bLimit, p.PipelineChan())
 	if err != nil {
 		return nil, err
