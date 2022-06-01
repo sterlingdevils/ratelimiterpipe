@@ -86,7 +86,7 @@ func (r *RateLimiterPipe[_]) mainloop() {
 	}
 }
 
-func NewWithChannel[T Sizeable](rLimit rate.Limit, bLimit int, in chan T) (*RateLimiterPipe[T], error) {
+func NewWithChannel[T Sizeable](rLimit rate.Limit, bLimit int, in chan T) *RateLimiterPipe[T] {
 	con, cancel := context.WithCancel(context.Background())
 	r := RateLimiterPipe[T]{
 		limit:   rate.NewLimiter(rLimit, bLimit),
@@ -98,24 +98,16 @@ func NewWithChannel[T Sizeable](rLimit rate.Limit, bLimit int, in chan T) (*Rate
 	r.wg.Add(1)
 	go r.mainloop()
 
-	return &r, nil
+	return &r
 }
 
-func NewWithPipeline[T Sizeable](rLimit rate.Limit, bLimit int, p pipelines.Pipeline[T]) (*RateLimiterPipe[T], error) {
-	r, err := NewWithChannel(rLimit, bLimit, p.PipelineChan())
-	if err != nil {
-		return nil, err
-	}
+func NewWithPipeline[T Sizeable](rLimit rate.Limit, bLimit int, p pipelines.Pipeline[T]) *RateLimiterPipe[T] {
+	r := NewWithChannel(rLimit, bLimit, p.PipelineChan())
 
 	r.pl = p
-	return r, nil
+	return r
 }
 
-func New[T Sizeable](rLimit rate.Limit, bLimit int) (*RateLimiterPipe[T], error) {
-	r, err := NewWithChannel(rLimit, bLimit, make(chan T, CHANSIZE))
-	if err != nil {
-		return nil, err
-	}
-
-	return r, nil
+func New[T Sizeable](rLimit rate.Limit, bLimit int) *RateLimiterPipe[T] {
+	return NewWithChannel(rLimit, bLimit, make(chan T, CHANSIZE))
 }
