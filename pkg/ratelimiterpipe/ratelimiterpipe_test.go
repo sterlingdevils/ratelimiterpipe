@@ -16,6 +16,10 @@ func (n Node) Size() int {
 	return len(n.data)
 }
 
+func (n Node) Data() []byte {
+	return []byte(n.data)
+}
+
 func ExampleNew() {
 	_ = ratelimiterpipe.New[Node](1, 2)
 	// Output:

@@ -8,15 +8,11 @@ import (
 	"golang.org/x/time/rate"
 )
 
-type Sizeable interface {
-	Size() int
-}
-
 const (
 	CHANSIZE = 0
 )
 
-type RateLimiterPipe[T Sizeable] struct {
+type RateLimiterPipe[T pipelines.SizerDater] struct {
 	limit *rate.Limiter
 
 	ctx context.Context
@@ -86,7 +82,7 @@ func (r *RateLimiterPipe[_]) mainloop() {
 	}
 }
 
-func NewWithChannel[T Sizeable](rLimit rate.Limit, bLimit int, in chan T) *RateLimiterPipe[T] {
+func NewWithChannel[T pipelines.SizerDater](rLimit rate.Limit, bLimit int, in chan T) *RateLimiterPipe[T] {
 	con, cancel := context.WithCancel(context.Background())
 	r := RateLimiterPipe[T]{
 		limit:   rate.NewLimiter(rLimit, bLimit),
@@ -101,13 +97,13 @@ func NewWithChannel[T Sizeable](rLimit rate.Limit, bLimit int, in chan T) *RateL
 	return &r
 }
 
-func NewWithPipeline[T Sizeable](rLimit rate.Limit, bLimit int, p pipelines.Pipeline[T]) *RateLimiterPipe[T] {
+func NewWithPipeline[T pipelines.SizerDater](rLimit rate.Limit, bLimit int, p pipelines.Pipeline[T]) *RateLimiterPipe[T] {
 	r := NewWithChannel(rLimit, bLimit, p.PipelineChan())
 
 	r.pl = p
 	return r
 }
 
-func New[T Sizeable](rLimit rate.Limit, bLimit int) *RateLimiterPipe[T] {
+func New[T pipelines.SizerDater](rLimit rate.Limit, bLimit int) *RateLimiterPipe[T] {
 	return NewWithChannel(rLimit, bLimit, make(chan T, CHANSIZE))
 }
