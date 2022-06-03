@@ -12,7 +12,7 @@ const (
 	CHANSIZE = 0
 )
 
-type RateLimiterPipe[T pipelines.SizerDater] struct {
+type RateLimiterPipe[T pipelines.DataSizer] struct {
 	limit *rate.Limiter
 
 	ctx context.Context
@@ -22,21 +22,21 @@ type RateLimiterPipe[T pipelines.SizerDater] struct {
 	outchan chan T
 
 	pl pipelines.Pipeline[T]
-	wg sync.WaitGroup
+	wg *sync.WaitGroup
 }
 
 // InChan
-func (r *RateLimiterPipe[T]) InChan() chan<- T {
+func (r RateLimiterPipe[T]) InChan() chan<- T {
 	return r.inchan
 }
 
 // OutChan
-func (r *RateLimiterPipe[T]) OutChan() <-chan T {
+func (r RateLimiterPipe[T]) OutChan() <-chan T {
 	return r.outchan
 }
 
 // PipelineChan returns a R/W channel that is used for pipelining
-func (r *RateLimiterPipe[T]) PipelineChan() chan T {
+func (r RateLimiterPipe[T]) PipelineChan() chan T {
 	return r.outchan
 }
 
@@ -82,12 +82,13 @@ func (r *RateLimiterPipe[_]) mainloop() {
 	}
 }
 
-func NewWithChannel[T pipelines.SizerDater](rLimit rate.Limit, bLimit int, in chan T) *RateLimiterPipe[T] {
+func NewWithChannel[T pipelines.DataSizer](rLimit rate.Limit, bLimit int, in chan T) *RateLimiterPipe[T] {
 	con, cancel := context.WithCancel(context.Background())
 	r := RateLimiterPipe[T]{
 		limit:   rate.NewLimiter(rLimit, bLimit),
 		ctx:     con,
 		can:     cancel,
+		wg:      new(sync.WaitGroup),
 		inchan:  in,
 		outchan: make(chan T, CHANSIZE)}
 
@@ -97,13 +98,13 @@ func NewWithChannel[T pipelines.SizerDater](rLimit rate.Limit, bLimit int, in ch
 	return &r
 }
 
-func NewWithPipeline[T pipelines.SizerDater](rLimit rate.Limit, bLimit int, p pipelines.Pipeline[T]) *RateLimiterPipe[T] {
+func NewWithPipeline[T pipelines.DataSizer](rLimit rate.Limit, bLimit int, p pipelines.Pipeline[T]) *RateLimiterPipe[T] {
 	r := NewWithChannel(rLimit, bLimit, p.PipelineChan())
 
 	r.pl = p
 	return r
 }
 
-func New[T pipelines.SizerDater](rLimit rate.Limit, bLimit int) *RateLimiterPipe[T] {
+func New[T pipelines.DataSizer](rLimit rate.Limit, bLimit int) *RateLimiterPipe[T] {
 	return NewWithChannel(rLimit, bLimit, make(chan T, CHANSIZE))
 }
